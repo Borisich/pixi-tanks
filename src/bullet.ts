@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import { checkCollision } from "./hitTest";
 import { createExplotion } from "./explotion";
+import { isBullet, isTank } from "./type-guards";
 
 type BulletParams = {
   vx?: number;
@@ -9,7 +10,7 @@ type BulletParams = {
   unlink?: () => void;
 };
 
-type Bullet = PIXI.Sprite & BulletParams;
+export type Bullet = PIXI.Sprite & BulletParams;
 
 export function createBullet(
   app: PIXI.Application,
@@ -87,8 +88,16 @@ export function createBullet(
       explode();
     }
 
-    if (typeof collisionTarget === "object") {
-      (collisionTarget as any).unlink?.();
+    if (isBullet(collisionTarget)) {
+      collisionTarget.unlink?.();
+    }
+
+    if (isTank(collisionTarget)) {
+      collisionTarget.health--;
+
+      if (collisionTarget.health <= 0) {
+        collisionTarget.unlink?.();
+      }
     }
   };
 

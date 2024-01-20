@@ -42,6 +42,7 @@ const tank3 = createTank(app, {
     right: "h",
     fire: "r",
   },
+  health: 50,
 });
 
 tank1.x = tank1.width + 100;
@@ -61,10 +62,3 @@ console.log(tank1.width);
 app.stage.addChild(tank1);
 app.stage.addChild(tank2);
 app.stage.addChild(tank3);
-
-PIXI.Ticker.shared.add((delta) => {
-  // console.log(hitTestRectangle(tank1, tank2));
-  // console.log(tank1.width);
-  // console.log(tank1.x);
-  // console.log(tank1.height);
-});

@@ -9,9 +9,12 @@ type TankParams = {
   type?: "tank";
   lastFireMs?: number;
   unlink?: () => void;
+  maxHealth?: number;
+  health?: number;
+  lastHelth?: number;
 };
 
-type Tank = PIXI.Sprite & TankParams;
+export type Tank = PIXI.Sprite & TankParams;
 
 export function createTank(
   app: PIXI.Application,
@@ -25,15 +28,18 @@ export function createTank(
       right: string;
       fire: string;
     };
+    health?: number;
   }
 ) {
-  const { speed, controls, fireFrec } = options;
+  const { speed, controls, fireFrec, health } = options;
 
   // Create a new texture
   const texture = PIXI.Texture.from("tank.png");
 
   const tank: Tank = new PIXI.Sprite(texture);
   tank.type = "tank";
+  tank.health = health || 5;
+  tank.maxHealth = tank.health;
 
   // center the sprite's anchor point
   tank.anchor.set(0.5);
@@ -118,6 +124,13 @@ export function createTank(
   };
 
   const process = (delta: number) => {
+    if (tank.health !== tank.lastHelth) {
+      drawHealthBar(tank);
+      console.log("DARW");
+
+      tank.lastHelth = tank.health;
+    }
+
     if (!tank.vy && !tank.vx) {
       return;
     }
@@ -221,4 +234,27 @@ function adjustBulletPosition(tank: Tank) {
         y: tank.y,
       };
   }
+}
+
+function drawHealthBar(tank: Tank) {
+  const c = tank.children[0];
+  c?.destroy();
+  const maxW = 40;
+  const heathPercent = tank.health / tank.maxHealth;
+
+  const w = Math.round(maxW * heathPercent);
+
+  let obj = new PIXI.Graphics();
+
+  // Add it to the stage to render
+  tank.addChild(obj);
+
+  obj.beginFill(getColor(heathPercent));
+  obj.drawRect(-21, -40, w, 8);
+}
+
+function getColor(value: number) {
+  //value from 0 to 1
+  var hue = (value * 120).toString(10);
+  return ["hsl(", hue, ",100%,50%)"].join("");
 }
