@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import { createTank } from "./tank";
+import { createExplotion } from "./explotion";
 
 const app = new PIXI.Application({
   background: "#1099bb",
@@ -10,6 +11,7 @@ document.body.appendChild(app.view as any);
 
 const tank1 = createTank(app, {
   speed: 5,
+  fireFrec: 0.5,
   controls: {
     up: "ArrowUp",
     down: "ArrowDown",
@@ -21,6 +23,7 @@ const tank1 = createTank(app, {
 
 const tank2 = createTank(app, {
   speed: 5,
+  fireFrec: 0.5,
   controls: {
     up: "w",
     down: "s",

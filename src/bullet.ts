@@ -1,10 +1,11 @@
 import * as PIXI from "pixi.js";
 import { checkCollision } from "./hitTest";
+import { createExplotion } from "./explotion";
 
 type BulletParams = {
   vx?: number;
   vy?: number;
-  others?: PIXI.Sprite[];
+  type?: "bullet";
 };
 
 type Bullet = PIXI.Sprite & BulletParams;
@@ -26,6 +27,7 @@ export function createBullet(
   const texture = PIXI.Texture.from("bullet.png");
 
   const bullet: Bullet = new PIXI.Sprite(texture);
+  bullet.type = "bullet";
 
   // center the sprite's anchor point
   bullet.anchor.set(0.5);
@@ -62,14 +64,25 @@ export function createBullet(
     }
 
     if (checkCollision(app, bullet)) {
+      const explotion = createExplotion(app, {
+        position: { x: bullet.x, y: bullet.y },
+      });
+
+      explotion.loop = false;
+      explotion.animationSpeed = 0.4;
+      explotion.onComplete = () => {
+        explotion.destroy();
+      };
+
+      app.stage.addChild(explotion);
+      explotion.play();
+
       t.remove(process);
       bullet.destroy();
     }
   };
 
   const t = PIXI.Ticker.shared.add(process);
-
-  console.log(app);
 
   return bullet;
 }

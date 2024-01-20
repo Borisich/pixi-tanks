@@ -7,6 +7,8 @@ type TankParams = {
   vx?: number;
   vy?: number;
   others?: PIXI.Sprite[];
+  type?: "tank";
+  lastFireMs?: number;
 };
 
 type Tank = PIXI.Sprite & TankParams;
@@ -15,6 +17,7 @@ export function createTank(
   app: PIXI.Application,
   options: {
     speed: number;
+    fireFrec: number;
     controls: {
       up: string;
       down: string;
@@ -24,12 +27,13 @@ export function createTank(
     };
   }
 ) {
-  const { speed, controls } = options;
+  const { speed, controls, fireFrec } = options;
 
   // Create a new texture
   const texture = PIXI.Texture.from("tank.png");
 
   const tank: Tank = new PIXI.Sprite(texture);
+  tank.type = "tank";
 
   // center the sprite's anchor point
   tank.anchor.set(0.5);
@@ -41,6 +45,14 @@ export function createTank(
   const fire = keyboard(controls.fire);
 
   fire.press = () => {
+    const now = new Date().getTime();
+
+    if (tank.lastFireMs && now - tank.lastFireMs < fireFrec * 1000) {
+      return;
+    }
+
+    tank.lastFireMs = now;
+
     const bullet = createBullet(app, {
       speed: 30,
       direction: tank.angle,
