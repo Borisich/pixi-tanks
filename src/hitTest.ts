@@ -1,3 +1,24 @@
+import * as PIXI from "pixi.js";
+
+export function checkCollision(app: PIXI.Application, obj: PIXI.Sprite) {
+  if (
+    obj.x < 40 ||
+    obj.y < 40 ||
+    obj.x > app.screen.width - 40 ||
+    obj.y > app.screen.height - 40
+  ) {
+    return true;
+  }
+
+  for (const o of app.stage.children) {
+    if (obj !== o && hitTestRectangle(obj, o)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function hitTestRectangle(r1: any, r2: any) {
   //Define the variables we'll need to calculate
   let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;

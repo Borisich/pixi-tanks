@@ -1,6 +1,5 @@
 import * as PIXI from "pixi.js";
 import { createTank } from "./tank";
-import { hitTestRectangle } from "./hitTest";
 
 const app = new PIXI.Application({
   background: "#1099bb",
@@ -16,6 +15,7 @@ const tank1 = createTank(app, {
     down: "ArrowDown",
     left: "ArrowLeft",
     right: "ArrowRight",
+    fire: "/",
   },
 });
 
@@ -26,6 +26,7 @@ const tank2 = createTank(app, {
     down: "s",
     left: "a",
     right: "d",
+    fire: "q",
   },
 });
 

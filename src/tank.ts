@@ -1,11 +1,12 @@
-import { hitTestRectangle } from "./hitTest";
+import { createBullet } from "./bullet";
+import { checkCollision } from "./hitTest";
 import { keyboard } from "./keyboard";
 import * as PIXI from "pixi.js";
 
 type TankParams = {
   vx?: number;
   vy?: number;
-  others?: Tank[];
+  others?: PIXI.Sprite[];
 };
 
 type Tank = PIXI.Sprite & TankParams;
@@ -14,7 +15,13 @@ export function createTank(
   app: PIXI.Application,
   options: {
     speed: number;
-    controls: { up: string; down: string; left: string; right: string };
+    controls: {
+      up: string;
+      down: string;
+      left: string;
+      right: string;
+      fire: string;
+    };
   }
 ) {
   const { speed, controls } = options;
@@ -31,6 +38,16 @@ export function createTank(
   const down = keyboard(controls.down);
   const left = keyboard(controls.left);
   const right = keyboard(controls.right);
+  const fire = keyboard(controls.fire);
+
+  fire.press = () => {
+    const bullet = createBullet(app, {
+      speed: 30,
+      direction: tank.angle,
+      position: adjustBulletPosition(tank),
+    });
+    app.stage.addChild(bullet);
+  };
 
   up.press = () => {
     if (tank.vx) {
@@ -129,25 +146,6 @@ export function createTank(
   return tank;
 }
 
-function checkCollision(app: PIXI.Application, tank: Tank) {
-  if (
-    tank.x < 40 ||
-    tank.y < 40 ||
-    tank.x > app.screen.width - 40 ||
-    tank.y > app.screen.height - 40
-  ) {
-    return true;
-  }
-
-  for (const o of tank.others) {
-    if (hitTestRectangle(tank, o)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 function syncRotation(app: PIXI.Application, tank: Tank) {
   const prevAngle = tank.angle;
 
@@ -171,5 +169,32 @@ function syncRotation(app: PIXI.Application, tank: Tank) {
     tank.angle = prevAngle;
     tank.vx = 0;
     tank.vy = 0;
+  }
+}
+
+function adjustBulletPosition(tank: Tank) {
+  const d = 100;
+  switch (tank.angle) {
+    case 0:
+      return {
+        x: tank.x,
+        y: tank.y + d,
+      };
+    case 90:
+      return {
+        x: tank.x - d,
+        y: tank.y,
+      };
+
+    case 180:
+      return {
+        x: tank.x,
+        y: tank.y - d,
+      };
+    case 270:
+      return {
+        x: tank.x + d,
+        y: tank.y,
+      };
   }
 }
