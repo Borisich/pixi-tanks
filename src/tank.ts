@@ -6,9 +6,9 @@ import * as PIXI from "pixi.js";
 type TankParams = {
   vx?: number;
   vy?: number;
-  others?: PIXI.Sprite[];
   type?: "tank";
   lastFireMs?: number;
+  unlink?: () => void;
 };
 
 type Tank = PIXI.Sprite & TankParams;
@@ -117,7 +117,7 @@ export function createTank(
     postRelease();
   };
 
-  PIXI.Ticker.shared.add((delta) => {
+  const process = (delta: number) => {
     if (!tank.vy && !tank.vx) {
       return;
     }
@@ -135,7 +135,19 @@ export function createTank(
       tank.x = prevX;
       tank.y = prevY;
     }
-  });
+  };
+
+  PIXI.Ticker.shared.add(process);
+
+  tank.unlink = () => {
+    PIXI.Ticker.shared.remove(process);
+    up.unsubscribe();
+    down.unsubscribe();
+    left.unsubscribe();
+    right.unsubscribe();
+    fire.unsubscribe();
+    tank.destroy();
+  };
 
   function postRelease() {
     if (down.isDown) {

@@ -1,6 +1,5 @@
 import * as PIXI from "pixi.js";
 import { createTank } from "./tank";
-import { createExplotion } from "./explotion";
 
 const app = new PIXI.Application({
   background: "#1099bb",
@@ -10,8 +9,8 @@ const app = new PIXI.Application({
 document.body.appendChild(app.view as any);
 
 const tank1 = createTank(app, {
-  speed: 5,
-  fireFrec: 0.5,
+  speed: 10,
+  fireFrec: 0.1,
   controls: {
     up: "ArrowUp",
     down: "ArrowDown",
@@ -23,7 +22,7 @@ const tank1 = createTank(app, {
 
 const tank2 = createTank(app, {
   speed: 5,
-  fireFrec: 0.5,
+  fireFrec: 0.1,
   controls: {
     up: "w",
     down: "s",
@@ -33,14 +32,26 @@ const tank2 = createTank(app, {
   },
 });
 
-tank1.others = [tank2];
-tank2.others = [tank1];
+const tank3 = createTank(app, {
+  speed: 7,
+  fireFrec: 0.1,
+  controls: {
+    up: "t",
+    down: "g",
+    left: "f",
+    right: "h",
+    fire: "r",
+  },
+});
 
 tank1.x = tank1.width + 100;
 tank1.y = tank1.height + 100;
 
 tank2.x = tank2.width + 500;
 tank2.y = tank2.height + 500;
+
+tank3.x = tank3.width + 900;
+tank3.y = tank3.height + 900;
 
 console.log(tank1.width);
 
@@ -49,6 +60,7 @@ console.log(tank1.width);
 
 app.stage.addChild(tank1);
 app.stage.addChild(tank2);
+app.stage.addChild(tank3);
 
 PIXI.Ticker.shared.add((delta) => {
   // console.log(hitTestRectangle(tank1, tank2));

@@ -7,12 +7,14 @@ export function checkCollision(app: PIXI.Application, obj: PIXI.Sprite) {
     obj.x > app.screen.width - 40 ||
     obj.y > app.screen.height - 40
   ) {
-    return true;
+    return "screen";
   }
 
-  for (const o of app.stage.children.filter((c) => !!(c as any).type)) {
+  for (const o of app.stage.children.filter(
+    (c) => !!(c as any).type && c.visible
+  )) {
     if (obj !== o && hitTestRectangle(obj, o)) {
-      return true;
+      return o;
     }
   }
 

@@ -6,6 +6,7 @@ type BulletParams = {
   vx?: number;
   vy?: number;
   type?: "bullet";
+  unlink?: () => void;
 };
 
 type Bullet = PIXI.Sprite & BulletParams;
@@ -56,6 +57,23 @@ export function createBullet(
     bullet.angle = 0;
   }
 
+  const explode = () => {
+    const explotion = createExplotion(app, {
+      position: { x: bullet.x, y: bullet.y },
+    });
+
+    explotion.loop = false;
+    explotion.animationSpeed = 0.4;
+    explotion.onComplete = () => {
+      explotion.destroy();
+    };
+
+    app.stage.addChild(explotion);
+    explotion.play();
+
+    bullet.unlink?.();
+  };
+
   const process = (delta: number) => {
     if (bullet.vy) {
       bullet.y += bullet.vy;
@@ -63,26 +81,22 @@ export function createBullet(
       bullet.x += bullet.vx;
     }
 
-    if (checkCollision(app, bullet)) {
-      const explotion = createExplotion(app, {
-        position: { x: bullet.x, y: bullet.y },
-      });
+    const collisionTarget = checkCollision(app, bullet);
 
-      explotion.loop = false;
-      explotion.animationSpeed = 0.4;
-      explotion.onComplete = () => {
-        explotion.destroy();
-      };
+    if (collisionTarget) {
+      explode();
+    }
 
-      app.stage.addChild(explotion);
-      explotion.play();
-
-      t.remove(process);
-      bullet.destroy();
+    if (typeof collisionTarget === "object") {
+      (collisionTarget as any).unlink?.();
     }
   };
 
-  const t = PIXI.Ticker.shared.add(process);
+  PIXI.Ticker.shared.add(process);
+  bullet.unlink = () => {
+    PIXI.Ticker.shared.remove(process);
+    bullet.destroy();
+  };
 
   return bullet;
 }
