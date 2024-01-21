@@ -1,7 +1,13 @@
+import { BonusType } from "./bonus";
 import { createBullet } from "./bullet";
 import { checkCollision } from "./hitTest";
 import { keyboard } from "./keyboard";
 import * as PIXI from "pixi.js";
+
+const MAX_SPEED = 15;
+const MAX_BULLET_SPEED = 70;
+
+const MIN_FIRE_FREQ = 0.1;
 
 type TankParams = {
   vx?: number;
@@ -9,12 +15,22 @@ type TankParams = {
   type?: "tank";
   lastFireMs?: number;
 
-  unlink?: () => void;
+  speed?: number;
+
+  bulletSpeed?: number;
+
   maxHealth?: number;
   health?: number;
+
+  fireFreq?: number;
+
+  unlink?: () => void;
+
   lastHelth?: number;
   lastAIActionMs?: number;
   isAI?: boolean;
+
+  applyBonus?: (option: { bonusType: BonusType; value: number }) => void;
 };
 
 const textures = ["tank.png", "tankBlue.png"];
@@ -27,7 +43,7 @@ export function createTank(
   app: PIXI.Application,
   options: {
     speed: number;
-    fireFrec: number;
+    fireFreq: number;
     controls?: {
       up: string;
       down: string;
@@ -39,7 +55,7 @@ export function createTank(
     textureNumber: number;
   }
 ) {
-  const { speed, controls, fireFrec, health } = options;
+  const { speed, controls, fireFreq, health } = options;
 
   // Create a new texture
   const texture = PIXI.Texture.from(textures[options.textureNumber]);
@@ -48,6 +64,11 @@ export function createTank(
   tank.type = "tank";
   tank.health = health || 5;
   tank.maxHealth = tank.health;
+  tank.speed = speed;
+  tank.bulletSpeed = 20;
+  tank.fireFreq = fireFreq;
+
+  setApplyBonusHandler(tank);
 
   // center the sprite's anchor point
   tank.anchor.set(0.5);
@@ -55,14 +76,14 @@ export function createTank(
   const onFire = () => {
     const now = new Date().getTime();
 
-    if (tank.lastFireMs && now - tank.lastFireMs < fireFrec * 1000) {
+    if (tank.lastFireMs && now - tank.lastFireMs < tank.fireFreq * 1000) {
       return;
     }
 
     tank.lastFireMs = now;
 
     const bullet = createBullet(app, {
-      speed: 30,
+      speed: tank.bulletSpeed,
       direction: tank.angle,
       position: adjustBulletPosition(tank),
     });
@@ -74,7 +95,7 @@ export function createTank(
       return;
     }
 
-    tank.vy = -speed;
+    tank.vy = -tank.speed;
     syncRotation(app, tank);
   };
 
@@ -83,7 +104,7 @@ export function createTank(
       return;
     }
 
-    tank.vy = speed;
+    tank.vy = tank.speed;
     syncRotation(app, tank);
   };
 
@@ -92,7 +113,7 @@ export function createTank(
       return;
     }
 
-    tank.vx = -speed;
+    tank.vx = -tank.speed;
     syncRotation(app, tank);
   };
 
@@ -101,7 +122,7 @@ export function createTank(
       return;
     }
 
-    tank.vx = speed;
+    tank.vx = tank.speed;
     syncRotation(app, tank);
   };
 
@@ -155,7 +176,6 @@ export function createTank(
   const process = (delta: number) => {
     const now = new Date().getTime();
     if (tank.isAI && now - tank.lastAIActionMs > aiFreq) {
-      console.log("here");
       tank.lastAIActionMs = now;
 
       onUpRelease();
@@ -266,7 +286,7 @@ function syncRotation(app: PIXI.Application, tank: Tank) {
 }
 
 function adjustBulletPosition(tank: Tank) {
-  const d = 100;
+  const d = tank.height / 2 + 10;
   switch (tank.angle) {
     case 0:
       return {
@@ -313,4 +333,45 @@ function getColor(value: number) {
   //value from 0 to 1
   var hue = (value * 120).toString(10);
   return ["hsl(", hue, ",100%,50%)"].join("");
+}
+
+function setApplyBonusHandler(tank: Tank) {
+  tank.applyBonus = (option: { bonusType: BonusType; value: number }) => {
+    switch (option.bonusType) {
+      case BonusType.Speed: {
+        tank.speed += option.value;
+        if (tank.speed > MAX_SPEED) {
+          tank.speed = MAX_SPEED;
+        }
+
+        break;
+      }
+      case BonusType.Aid: {
+        tank.health += option.value;
+        if (tank.health > tank.maxHealth) {
+          tank.health = tank.maxHealth;
+        }
+
+        break;
+      }
+      case BonusType.FireFreq: {
+        tank.fireFreq -= option.value;
+        if (tank.fireFreq < MIN_FIRE_FREQ) {
+          tank.fireFreq = MIN_FIRE_FREQ;
+        }
+
+        break;
+      }
+      case BonusType.BulletSpeed: {
+        tank.bulletSpeed += option.value;
+        if (tank.bulletSpeed > MAX_BULLET_SPEED) {
+          tank.bulletSpeed = MAX_BULLET_SPEED;
+        }
+
+        break;
+      }
+      default:
+      //
+    }
+  };
 }
