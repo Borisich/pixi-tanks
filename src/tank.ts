@@ -8,11 +8,18 @@ type TankParams = {
   vy?: number;
   type?: "tank";
   lastFireMs?: number;
+
   unlink?: () => void;
   maxHealth?: number;
   health?: number;
   lastHelth?: number;
+  lastAIActionMs?: number;
+  isAI?: boolean;
 };
+
+const textures = ["tank.png", "tankBlue.png"];
+
+const aiFreq = 300;
 
 export type Tank = PIXI.Sprite & TankParams;
 
@@ -21,7 +28,7 @@ export function createTank(
   options: {
     speed: number;
     fireFrec: number;
-    controls: {
+    controls?: {
       up: string;
       down: string;
       left: string;
@@ -29,12 +36,13 @@ export function createTank(
       fire: string;
     };
     health?: number;
+    textureNumber: number;
   }
 ) {
   const { speed, controls, fireFrec, health } = options;
 
   // Create a new texture
-  const texture = PIXI.Texture.from("tank.png");
+  const texture = PIXI.Texture.from(textures[options.textureNumber]);
 
   const tank: Tank = new PIXI.Sprite(texture);
   tank.type = "tank";
@@ -44,13 +52,7 @@ export function createTank(
   // center the sprite's anchor point
   tank.anchor.set(0.5);
 
-  const up = keyboard(controls.up);
-  const down = keyboard(controls.down);
-  const left = keyboard(controls.left);
-  const right = keyboard(controls.right);
-  const fire = keyboard(controls.fire);
-
-  fire.press = () => {
+  const onFire = () => {
     const now = new Date().getTime();
 
     if (tank.lastFireMs && now - tank.lastFireMs < fireFrec * 1000) {
@@ -67,7 +69,7 @@ export function createTank(
     app.stage.addChild(bullet);
   };
 
-  up.press = () => {
+  const onUp = () => {
     if (tank.vx) {
       return;
     }
@@ -76,12 +78,7 @@ export function createTank(
     syncRotation(app, tank);
   };
 
-  up.release = () => {
-    tank.vy = 0;
-    postRelease();
-  };
-
-  down.press = () => {
+  const onDown = () => {
     if (tank.vx) {
       return;
     }
@@ -90,12 +87,7 @@ export function createTank(
     syncRotation(app, tank);
   };
 
-  down.release = () => {
-    tank.vy = 0;
-    postRelease();
-  };
-
-  left.press = () => {
+  const onLeft = () => {
     if (tank.vy) {
       return;
     }
@@ -104,12 +96,7 @@ export function createTank(
     syncRotation(app, tank);
   };
 
-  left.release = () => {
-    tank.vx = 0;
-    postRelease();
-  };
-
-  right.press = () => {
+  const onRight = () => {
     if (tank.vy) {
       return;
     }
@@ -118,15 +105,84 @@ export function createTank(
     syncRotation(app, tank);
   };
 
-  right.release = () => {
+  const onUpRelease = () => {
+    tank.vy = 0;
+    postRelease();
+  };
+
+  const onDownRelease = () => {
+    tank.vy = 0;
+    postRelease();
+  };
+
+  const onLeftRelease = () => {
     tank.vx = 0;
     postRelease();
   };
 
+  const onRightRelease = () => {
+    tank.vx = 0;
+    postRelease();
+  };
+
+  let up: any, down: any, left: any, right: any, fire: any;
+
+  if (controls) {
+    up = keyboard(controls.up);
+    down = keyboard(controls.down);
+    left = keyboard(controls.left);
+    right = keyboard(controls.right);
+    fire = keyboard(controls.fire);
+
+    fire.press = onFire;
+
+    up.press = onUp;
+    up.release = onUpRelease;
+
+    down.press = onDown;
+    down.release = onDownRelease;
+
+    left.press = onLeft;
+    left.release = onLeftRelease;
+
+    right.press = onRight;
+    right.release = onRightRelease;
+  } else {
+    tank.isAI = true;
+    tank.lastAIActionMs = 0;
+  }
+
   const process = (delta: number) => {
+    const now = new Date().getTime();
+    if (tank.isAI && now - tank.lastAIActionMs > aiFreq) {
+      console.log("here");
+      tank.lastAIActionMs = now;
+
+      onUpRelease();
+      onDownRelease();
+      onLeftRelease();
+      onRightRelease();
+
+      const m = Math.random();
+      const f = Math.random();
+
+      if (m < 0.25) {
+        onUp();
+      } else if (m < 0.5) {
+        onDown();
+      } else if (m < 0.75) {
+        onLeft();
+      } else {
+        onRight();
+      }
+
+      if (f > 0.3) {
+        onFire();
+      }
+    }
+
     if (tank.health !== tank.lastHelth) {
       drawHealthBar(tank);
-      console.log("DARW");
 
       tank.lastHelth = tank.health;
     }
@@ -154,29 +210,29 @@ export function createTank(
 
   tank.unlink = () => {
     PIXI.Ticker.shared.remove(process);
-    up.unsubscribe();
-    down.unsubscribe();
-    left.unsubscribe();
-    right.unsubscribe();
-    fire.unsubscribe();
+    up?.unsubscribe();
+    down?.unsubscribe();
+    left?.unsubscribe();
+    right?.unsubscribe();
+    fire?.unsubscribe();
     tank.destroy();
   };
 
   function postRelease() {
-    if (down.isDown) {
-      down.press();
+    if (down?.isDown) {
+      onDown();
     }
 
-    if (up.isDown) {
-      up.press();
+    if (up?.isDown) {
+      onUp();
     }
 
-    if (left.isDown) {
-      left.press();
+    if (left?.isDown) {
+      onLeft();
     }
 
-    if (right.isDown) {
-      right.press();
+    if (right?.isDown) {
+      onRight();
     }
   }
 

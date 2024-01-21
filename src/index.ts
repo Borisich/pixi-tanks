@@ -9,7 +9,7 @@ const app = new PIXI.Application({
 document.body.appendChild(app.view as any);
 
 const tank1 = createTank(app, {
-  speed: 10,
+  speed: 3,
   fireFrec: 0.1,
   controls: {
     up: "ArrowUp",
@@ -18,10 +18,11 @@ const tank1 = createTank(app, {
     right: "ArrowRight",
     fire: "/",
   },
+  textureNumber: 0,
 });
 
 const tank2 = createTank(app, {
-  speed: 5,
+  speed: 3,
   fireFrec: 0.1,
   controls: {
     up: "w",
@@ -30,20 +31,24 @@ const tank2 = createTank(app, {
     right: "d",
     fire: "q",
   },
+  textureNumber: 0,
 });
 
-const tank3 = createTank(app, {
-  speed: 7,
-  fireFrec: 0.1,
-  controls: {
-    up: "t",
-    down: "g",
-    left: "f",
-    right: "h",
-    fire: "r",
-  },
-  health: 50,
-});
+const aiCnt = 7;
+
+for (let i = 0; i < aiCnt; i++) {
+  const t = createTank(app, {
+    speed: 7,
+    fireFrec: 0.1,
+    health: 15,
+    textureNumber: 1,
+  });
+
+  t.x = 200 + 200 * i;
+  t.y = 1000;
+
+  app.stage.addChild(t);
+}
 
 tank1.x = tank1.width + 100;
 tank1.y = tank1.height + 100;
@@ -51,14 +56,5 @@ tank1.y = tank1.height + 100;
 tank2.x = tank2.width + 500;
 tank2.y = tank2.height + 500;
 
-tank3.x = tank3.width + 900;
-tank3.y = tank3.height + 900;
-
-console.log(tank1.width);
-
-// tank2.x = app.screen.width - 100;
-// tank2.y = app.screen.height - 100;
-
 app.stage.addChild(tank1);
 app.stage.addChild(tank2);
-app.stage.addChild(tank3);
