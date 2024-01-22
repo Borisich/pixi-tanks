@@ -4,13 +4,13 @@ import { createExplotion } from "./explotion";
 import { isBullet, isTank } from "./type-guards";
 
 type BulletParams = {
-  vx?: number;
-  vy?: number;
-  type?: "bullet";
-  unlink?: () => void;
+  type: "bullet";
+  vx: number;
+  vy: number;
+  unlink: () => void;
 };
 
-export type Bullet = PIXI.Sprite & BulletParams;
+export type Bullet = PIXI.Sprite & { data: BulletParams };
 
 export function createBullet(
   app: PIXI.Application,
@@ -27,9 +27,18 @@ export function createBullet(
 
   // Create a new texture
   const texture = PIXI.Texture.from("bullet.png");
+  const sprite = new PIXI.Sprite(texture);
 
-  const bullet: Bullet = new PIXI.Sprite(texture);
-  bullet.type = "bullet";
+  const bullet: Bullet = Object.assign(sprite, {
+    data: {
+      type: "bullet" as const,
+      vx: 0,
+      vy: 0,
+      unlink: () => {},
+    },
+  });
+
+  (bullet as any).type = "bullet";
 
   // center the sprite's anchor point
   bullet.anchor.set(0.5);
@@ -39,22 +48,22 @@ export function createBullet(
   bullet.y = position.y;
 
   if (direction === 0) {
-    bullet.vy = speed;
+    bullet.data.vy = speed;
     bullet.angle = 90;
   }
 
   if (direction === 90) {
-    bullet.vx = -speed;
+    bullet.data.vx = -speed;
     bullet.angle = 180;
   }
 
   if (direction === 180) {
-    bullet.vy = -speed;
+    bullet.data.vy = -speed;
     bullet.angle = 270;
   }
 
   if (direction === 270) {
-    bullet.vx = speed;
+    bullet.data.vx = speed;
     bullet.angle = 0;
   }
 
@@ -72,14 +81,14 @@ export function createBullet(
     app.stage.addChild(explotion);
     explotion.play();
 
-    bullet.unlink?.();
+    bullet.data.unlink();
   };
 
   const process = (delta: number) => {
-    if (bullet.vy) {
-      bullet.y += bullet.vy;
-    } else if (bullet.vx) {
-      bullet.x += bullet.vx;
+    if (bullet.data.vy) {
+      bullet.y += bullet.data.vy;
+    } else if (bullet.data.vx) {
+      bullet.x += bullet.data.vx;
     }
 
     const collisionTarget = checkCollision(app, bullet);
@@ -89,20 +98,20 @@ export function createBullet(
     }
 
     if (isBullet(collisionTarget)) {
-      collisionTarget.unlink?.();
+      collisionTarget.data.unlink();
     }
 
     if (isTank(collisionTarget)) {
-      collisionTarget.health--;
+      collisionTarget.data.health--;
 
-      if (collisionTarget.health <= 0) {
-        collisionTarget.unlink?.();
+      if (collisionTarget.data.health <= 0) {
+        collisionTarget.data.unlink();
       }
     }
   };
 
   PIXI.Ticker.shared.add(process);
-  bullet.unlink = () => {
+  bullet.data.unlink = () => {
     PIXI.Ticker.shared.remove(process);
     bullet.destroy();
   };

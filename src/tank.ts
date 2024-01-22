@@ -10,34 +10,34 @@ const MAX_BULLET_SPEED = 70;
 const MIN_FIRE_FREQ = 0.1;
 
 type TankParams = {
-  vx?: number;
-  vy?: number;
-  type?: "tank";
-  lastFireMs?: number;
+  type: "tank";
+  vx: number;
+  vy: number;
+  lastFireMs: number;
 
-  speed?: number;
+  speed: number;
 
-  bulletSpeed?: number;
+  bulletSpeed: number;
 
-  maxHealth?: number;
-  health?: number;
+  maxHealth: number;
+  health: number;
 
-  fireFreq?: number;
+  fireFreq: number;
 
-  unlink?: () => void;
+  unlink: () => void;
 
-  lastHelth?: number;
-  lastAIActionMs?: number;
-  isAI?: boolean;
+  lastHelth: number;
+  lastAIActionMs: number;
+  isAI: boolean;
 
   applyBonus?: (option: { bonusType: BonusType; value: number }) => void;
 };
 
 const textures = ["tank.png", "tankBlue.png"];
 
-const aiFreq = 300;
+const AI_FREQ_SEC = 3;
 
-export type Tank = PIXI.Sprite & TankParams;
+export type Tank = PIXI.Sprite & { data: TankParams };
 
 export function createTank(
   app: PIXI.Application,
@@ -60,15 +60,27 @@ export function createTank(
   // Create a new texture
   const texture = PIXI.Texture.from(textures[options.textureNumber]);
 
-  const tank: Tank = new PIXI.Sprite(texture);
-  tank.type = "tank";
-  tank.health = health || 5;
-  tank.maxHealth = tank.health;
-  tank.speed = speed;
-  tank.bulletSpeed = 20;
-  tank.fireFreq = fireFreq;
+  const sprite = new PIXI.Sprite(texture);
 
-  setApplyBonusHandler(tank);
+  const tank: Tank = Object.assign(sprite, {
+    data: {
+      type: "tank" as const,
+      vx: 0,
+      vy: 0,
+      health: health || 5,
+      maxHealth: health || 5,
+      lastHelth: 0,
+      speed,
+      bulletSpeed: 20,
+      fireFreq,
+      lastFireMs: 0,
+      unlink: () => {},
+      lastAIActionMs: 0,
+      isAI: !controls,
+    },
+  });
+
+  tank.data.applyBonus = getApplyBonusHandler(tank);
 
   // center the sprite's anchor point
   tank.anchor.set(0.5);
@@ -76,14 +88,17 @@ export function createTank(
   const onFire = () => {
     const now = new Date().getTime();
 
-    if (tank.lastFireMs && now - tank.lastFireMs < tank.fireFreq * 1000) {
+    if (
+      tank.data.lastFireMs &&
+      now - tank.data.lastFireMs < tank.data.fireFreq * 1000
+    ) {
       return;
     }
 
-    tank.lastFireMs = now;
+    tank.data.lastFireMs = now;
 
     const bullet = createBullet(app, {
-      speed: tank.bulletSpeed,
+      speed: tank.data.bulletSpeed,
       direction: tank.angle,
       position: adjustBulletPosition(tank),
     });
@@ -91,58 +106,58 @@ export function createTank(
   };
 
   const onUp = () => {
-    if (tank.vx) {
+    if (tank.data.vx) {
       return;
     }
 
-    tank.vy = -tank.speed;
+    tank.data.vy = -tank.data.speed;
     syncRotation(app, tank);
   };
 
   const onDown = () => {
-    if (tank.vx) {
+    if (tank.data.vx) {
       return;
     }
 
-    tank.vy = tank.speed;
+    tank.data.vy = tank.data.speed;
     syncRotation(app, tank);
   };
 
   const onLeft = () => {
-    if (tank.vy) {
+    if (tank.data.vy) {
       return;
     }
 
-    tank.vx = -tank.speed;
+    tank.data.vx = -tank.data.speed;
     syncRotation(app, tank);
   };
 
   const onRight = () => {
-    if (tank.vy) {
+    if (tank.data.vy) {
       return;
     }
 
-    tank.vx = tank.speed;
+    tank.data.vx = tank.data.speed;
     syncRotation(app, tank);
   };
 
   const onUpRelease = () => {
-    tank.vy = 0;
+    tank.data.vy = 0;
     postRelease();
   };
 
   const onDownRelease = () => {
-    tank.vy = 0;
+    tank.data.vy = 0;
     postRelease();
   };
 
   const onLeftRelease = () => {
-    tank.vx = 0;
+    tank.data.vx = 0;
     postRelease();
   };
 
   const onRightRelease = () => {
-    tank.vx = 0;
+    tank.data.vx = 0;
     postRelease();
   };
 
@@ -168,15 +183,12 @@ export function createTank(
 
     right.press = onRight;
     right.release = onRightRelease;
-  } else {
-    tank.isAI = true;
-    tank.lastAIActionMs = 0;
   }
 
   const process = (delta: number) => {
     const now = new Date().getTime();
-    if (tank.isAI && now - tank.lastAIActionMs > aiFreq) {
-      tank.lastAIActionMs = now;
+    if (tank.data.isAI && now - tank.data.lastAIActionMs > AI_FREQ_SEC * 1000) {
+      tank.data.lastAIActionMs = now;
 
       onUpRelease();
       onDownRelease();
@@ -196,28 +208,28 @@ export function createTank(
         onRight();
       }
 
-      if (f > 0.3) {
+      if (f > 0.1) {
         onFire();
       }
     }
 
-    if (tank.health !== tank.lastHelth) {
+    if (tank.data.health !== tank.data.lastHelth) {
       drawHealthBar(tank);
 
-      tank.lastHelth = tank.health;
+      tank.data.lastHelth = tank.data.health;
     }
 
-    if (!tank.vy && !tank.vx) {
+    if (!tank.data.vy && !tank.data.vx) {
       return;
     }
 
     const prevX = tank.x;
     const prevY = tank.y;
 
-    if (tank.vy) {
-      tank.y += tank.vy;
-    } else if (tank.vx) {
-      tank.x += tank.vx;
+    if (tank.data.vy) {
+      tank.y += tank.data.vy;
+    } else if (tank.data.vx) {
+      tank.x += tank.data.vx;
     }
 
     if (checkCollision(app, tank)) {
@@ -228,7 +240,7 @@ export function createTank(
 
   PIXI.Ticker.shared.add(process);
 
-  tank.unlink = () => {
+  tank.data.unlink = () => {
     PIXI.Ticker.shared.remove(process);
     up?.unsubscribe();
     down?.unsubscribe();
@@ -262,26 +274,26 @@ export function createTank(
 function syncRotation(app: PIXI.Application, tank: Tank) {
   const prevAngle = tank.angle;
 
-  if (tank.angle !== 0 && tank.vy > 0) {
+  if (tank.angle !== 0 && tank.data.vy > 0) {
     tank.angle = 0;
   }
 
-  if (tank.angle !== 180 && tank.vy < 0) {
+  if (tank.angle !== 180 && tank.data.vy < 0) {
     tank.angle = 180;
   }
 
-  if (tank.angle !== 90 && tank.vx < 0) {
+  if (tank.angle !== 90 && tank.data.vx < 0) {
     tank.angle = 90;
   }
 
-  if (tank.angle !== 270 && tank.vx > 0) {
+  if (tank.angle !== 270 && tank.data.vx > 0) {
     tank.angle = 270;
   }
 
   if (checkCollision(app, tank)) {
     tank.angle = prevAngle;
-    tank.vx = 0;
-    tank.vy = 0;
+    tank.data.vx = 0;
+    tank.data.vy = 0;
   }
 }
 
@@ -310,13 +322,15 @@ function adjustBulletPosition(tank: Tank) {
         y: tank.y,
       };
   }
+
+  throw new Error("Bad angle");
 }
 
 function drawHealthBar(tank: Tank) {
   const c = tank.children[0];
   c?.destroy();
   const maxW = 40;
-  const heathPercent = tank.health / tank.maxHealth;
+  const heathPercent = tank.data.health / tank.data.maxHealth;
 
   const w = Math.round(maxW * heathPercent);
 
@@ -335,37 +349,37 @@ function getColor(value: number) {
   return ["hsl(", hue, ",100%,50%)"].join("");
 }
 
-function setApplyBonusHandler(tank: Tank) {
-  tank.applyBonus = (option: { bonusType: BonusType; value: number }) => {
+function getApplyBonusHandler(tank: Tank) {
+  return (option: { bonusType: BonusType; value: number }) => {
     switch (option.bonusType) {
       case BonusType.Speed: {
-        tank.speed += option.value;
-        if (tank.speed > MAX_SPEED) {
-          tank.speed = MAX_SPEED;
+        tank.data.speed += option.value;
+        if (tank.data.speed > MAX_SPEED) {
+          tank.data.speed = MAX_SPEED;
         }
 
         break;
       }
       case BonusType.Aid: {
-        tank.health += option.value;
-        if (tank.health > tank.maxHealth) {
-          tank.health = tank.maxHealth;
+        tank.data.health += option.value;
+        if (tank.data.health > tank.data.maxHealth) {
+          tank.data.health = tank.data.maxHealth;
         }
 
         break;
       }
       case BonusType.FireFreq: {
-        tank.fireFreq -= option.value;
-        if (tank.fireFreq < MIN_FIRE_FREQ) {
-          tank.fireFreq = MIN_FIRE_FREQ;
+        tank.data.fireFreq -= option.value;
+        if (tank.data.fireFreq < MIN_FIRE_FREQ) {
+          tank.data.fireFreq = MIN_FIRE_FREQ;
         }
 
         break;
       }
       case BonusType.BulletSpeed: {
-        tank.bulletSpeed += option.value;
-        if (tank.bulletSpeed > MAX_BULLET_SPEED) {
-          tank.bulletSpeed = MAX_BULLET_SPEED;
+        tank.data.bulletSpeed += option.value;
+        if (tank.data.bulletSpeed > MAX_BULLET_SPEED) {
+          tank.data.bulletSpeed = MAX_BULLET_SPEED;
         }
 
         break;

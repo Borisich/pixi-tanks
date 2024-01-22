@@ -6,7 +6,7 @@ export function isTank(v: any): v is Tank {
     return false;
   }
 
-  return v.type === "tank";
+  return v.data?.type === "tank";
 }
 
 export function isBullet(v: any): v is Bullet {
@@ -14,5 +14,5 @@ export function isBullet(v: any): v is Bullet {
     return false;
   }
 
-  return v.type === "bullet";
+  return v.data?.type === "bullet";
 }

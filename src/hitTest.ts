@@ -11,7 +11,7 @@ export function checkCollision(app: PIXI.Application, obj: PIXI.Sprite) {
   }
 
   for (const o of app.stage.children.filter(
-    (c) => !!(c as any).type && c.visible
+    (c) => !!(c as any).data?.type && c.visible
   )) {
     if (obj !== o && hitTestRectangle(obj, o)) {
       return o;

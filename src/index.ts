@@ -38,27 +38,29 @@ const tank2 = createTank(app, {
   textureNumber: 0,
 });
 
-const aiCnt = 5;
+const aiCnt = 1;
 
 for (let i = 0; i < aiCnt; i++) {
   const t = createTank(app, {
-    speed: 1,
-    fireFreq: 1,
-    health: 15,
+    speed: 4,
+    fireFreq: 0.3,
+    health: 25,
     textureNumber: 1,
   });
 
-  t.x = 200 + 200 * i;
-  t.y = 1000;
+  t.x = 700 + 200 * i;
+  t.y = 150;
 
   app.stage.addChild(t);
 }
 
-tank1.x = tank1.width + 100;
-tank1.y = tank1.height + 100;
+tank2.x = 100;
+tank2.y = app.screen.height - 150;
+tank2.angle = 180;
 
-tank2.x = tank2.width + 500;
-tank2.y = tank2.height + 500;
+tank1.x = app.screen.width + -100; ///
+tank1.y = app.screen.height - 150;
+tank1.angle = 180;
 
 app.stage.addChild(tank1);
 app.stage.addChild(tank2);

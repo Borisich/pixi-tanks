@@ -3,6 +3,8 @@ import { checkCollision } from "./hitTest";
 import { getRandomCoords } from "./utils";
 import { isTank } from "./type-guards";
 
+const BONUS_EXISTS_SEC = 30;
+
 export enum BonusType {
   Speed = "speed",
   Aid = "aid",
@@ -11,13 +13,12 @@ export enum BonusType {
 }
 
 type BonusData = {
-  // type?: "bonus";
-  bonusType?: BonusType;
-  value?: number;
-  addedAt?: number;
+  bonusType: BonusType;
+  value: number;
+  addedAt: number;
 };
 
-export type Bonus = PIXI.Sprite & BonusData;
+export type Bonus = PIXI.Sprite & { data: BonusData };
 
 const texturesMap = {
   [BonusType.Speed]: "speed.png",
@@ -28,10 +29,10 @@ const texturesMap = {
 
 export async function createBonus(
   app: PIXI.Application,
-  options?: {
+  options: {
     bonusType: BonusType;
     value: number;
-  }
+  } | null
 ) {
   if (!options) {
     return;
@@ -41,12 +42,15 @@ export async function createBonus(
   const texture = await PIXI.Assets.load(
     `bonus/${texturesMap[options.bonusType]}`
   );
-  const bonus: Bonus = new PIXI.Sprite(texture);
+  const sprite = new PIXI.Sprite(texture);
 
-  // bonus.type = "bonus";
-  bonus.addedAt = new Date().getTime();
-  bonus.value = options.value;
-  bonus.bonusType = options.bonusType;
+  const bonus: Bonus = Object.assign(sprite, {
+    data: {
+      addedAt: new Date().getTime(),
+      value: options.value,
+      bonusType: options.bonusType,
+    },
+  });
 
   bonus.anchor.set(0.5);
   bonus.scale.set(0.2, 0.2);
@@ -58,7 +62,7 @@ export async function createBonus(
   const process = (delta: number) => {
     const now = new Date().getTime();
 
-    if (now - bonus.addedAt > 10 * 1000) {
+    if (now - bonus.data.addedAt > BONUS_EXISTS_SEC * 1000) {
       unlink();
       return;
     }
@@ -66,9 +70,9 @@ export async function createBonus(
     const collisionTarget = checkCollision(app, bonus);
 
     if (isTank(collisionTarget)) {
-      collisionTarget.applyBonus?.({
-        bonusType: bonus.bonusType,
-        value: bonus.value,
+      collisionTarget.data.applyBonus?.({
+        bonusType: bonus.data.bonusType,
+        value: bonus.data.value,
       });
 
       unlink();
