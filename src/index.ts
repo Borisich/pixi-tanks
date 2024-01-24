@@ -66,7 +66,11 @@ app.stage.addChild(tank1);
 app.stage.addChild(tank2);
 
 setInterval(() => {
-  createBonus(app, getBonusParams());
+  if (getRandomInt(0, 10) < 6) {
+    return;
+  }
+
+  createBonus(app, { bonusType: getBonusType() });
 }, 1000 * BONUS_SPAWN_PERIOD_SEC);
 
 const bonusesFreq = {
@@ -84,37 +88,6 @@ for (const [type, n] of Object.entries(bonusesFreq)) {
   }
 }
 
-function getBonusParams(): {
-  bonusType: BonusType;
-  value: number;
-} | null {
-  if (getRandomInt(0, 10) < 6) {
-    return null;
-  }
-
-  const bonus = bA[getRandomInt(0, bA.length - 1)];
-  let value = 0;
-
-  switch (bonus) {
-    case BonusType.FireFreq:
-      value = 0.1;
-      break;
-    case BonusType.Aid:
-    case BonusType.Speed:
-      value = 1;
-      break;
-    case BonusType.BulletSpeed:
-      value = 10;
-      break;
-    case BonusType.Power:
-      value = 1;
-      break;
-    default:
-    //
-  }
-
-  return {
-    bonusType: bonus,
-    value,
-  };
+function getBonusType(): BonusType {
+  return bA[getRandomInt(0, bA.length - 1)];
 }

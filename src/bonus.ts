@@ -34,17 +34,28 @@ const texturesMap = {
   [BonusType.Power]: "power.png",
 };
 
+function getBousValue(bonus: BonusType) {
+  switch (bonus) {
+    case BonusType.FireFreq:
+      return 0.1;
+    case BonusType.Aid:
+    case BonusType.Speed:
+      return 1;
+    case BonusType.BulletSpeed:
+      return 10;
+    case BonusType.Power:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 export async function createBonus(
   app: PIXI.Application,
   options: {
     bonusType: BonusType;
-    value: number;
-  } | null
-) {
-  if (!options) {
-    return;
   }
-
+) {
   // Create a new texture
   const texture = await PIXI.Assets.load(
     `bonus/${texturesMap[options.bonusType]}`
@@ -54,7 +65,7 @@ export async function createBonus(
   const bonus: Bonus = Object.assign(sprite, {
     data: {
       addedAt: new Date().getTime(),
-      value: options.value,
+      value: getBousValue(options.bonusType),
       bonusType: options.bonusType,
     },
   });
