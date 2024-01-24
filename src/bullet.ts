@@ -5,6 +5,7 @@ import { isBullet, isTank } from "./type-guards";
 
 type BulletParams = {
   type: "bullet";
+  damage: number;
   vx: number;
   vy: number;
   unlink: () => void;
@@ -17,13 +18,14 @@ export function createBullet(
   options: {
     speed: number;
     direction: number;
+    damage: number;
     position: {
       x: number;
       y: number;
     };
   }
 ) {
-  const { speed, direction, position } = options;
+  const { speed, direction, position, damage } = options;
 
   // Create a new texture
   const texture = PIXI.Texture.from("bullet.png");
@@ -31,6 +33,7 @@ export function createBullet(
 
   const bullet: Bullet = Object.assign(sprite, {
     data: {
+      damage,
       type: "bullet" as const,
       vx: 0,
       vy: 0,
@@ -102,7 +105,7 @@ export function createBullet(
     }
 
     if (isTank(collisionTarget)) {
-      collisionTarget.data.health--;
+      collisionTarget.data.health -= bullet.data.damage;
 
       if (collisionTarget.data.health <= 0) {
         collisionTarget.data.unlink();

@@ -10,6 +10,7 @@ export enum BonusType {
   Aid = "aid",
   FireFreq = "fireFreq",
   BulletSpeed = "bulletSpeed",
+  Power = "power",
 }
 
 type BonusData = {
@@ -30,6 +31,7 @@ const texturesMap = {
   [BonusType.Aid]: "aid.png",
   [BonusType.FireFreq]: "fire-freq.png",
   [BonusType.BulletSpeed]: "bullet-speed.png",
+  [BonusType.Power]: "power.png",
 };
 
 export async function createBonus(

@@ -74,6 +74,7 @@ const bonusesFreq = {
   [BonusType.Aid]: 4,
   [BonusType.FireFreq]: 2,
   [BonusType.BulletSpeed]: 1,
+  [BonusType.Power]: 6,
 };
 
 const bA: BonusType[] = [];
@@ -104,6 +105,9 @@ function getBonusParams(): {
       break;
     case BonusType.BulletSpeed:
       value = 10;
+      break;
+    case BonusType.Power:
+      value = 1;
       break;
     default:
     //

@@ -13,6 +13,8 @@ const AI_TARGET_DURATION_SEC = 40;
 
 const MIN_FIRE_FREQ = 0.1;
 
+const MAX_DMG = 5;
+
 const AI_FREQ_SEC = 1;
 
 type TankParams = {
@@ -24,6 +26,8 @@ type TankParams = {
   speed: number;
 
   bulletSpeed: number;
+
+  damage: number;
 
   maxHealth: number;
   health: number;
@@ -73,6 +77,7 @@ export function createTank(
       type: "tank" as const,
       vx: 0,
       vy: 0,
+      damage: 1,
       health: health || 5,
       maxHealth: health || 5,
       lastHelth: 0,
@@ -108,6 +113,7 @@ export function createTank(
       speed: tank.data.bulletSpeed,
       direction: tank.angle,
       position: adjustBulletPosition(tank),
+      damage: tank.data.damage,
     });
     app.stage.addChild(bullet);
   };
@@ -478,6 +484,14 @@ function getApplyBonusHandler(tank: Tank) {
         tank.data.bulletSpeed += option.value;
         if (tank.data.bulletSpeed > MAX_BULLET_SPEED) {
           tank.data.bulletSpeed = MAX_BULLET_SPEED;
+        }
+
+        break;
+      }
+      case BonusType.Power: {
+        tank.data.damage += option.value;
+        if (tank.data.damage > MAX_DMG) {
+          tank.data.damage = MAX_DMG;
         }
 
         break;
