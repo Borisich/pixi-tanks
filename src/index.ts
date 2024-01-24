@@ -3,7 +3,7 @@ import { createTank } from "./tank";
 import { BonusType, createBonus } from "./bonus";
 import { getRandomInt } from "./utils";
 
-const BONUS_SPAWN_PERIOD_SEC = 10;
+const BONUS_SPAWN_PERIOD_SEC = 2;
 
 const app = new PIXI.Application({
   background: "#1099bb",
@@ -42,8 +42,8 @@ const aiCnt = 1;
 
 for (let i = 0; i < aiCnt; i++) {
   const t = createTank(app, {
-    speed: 4,
-    fireFreq: 0.3,
+    speed: 1,
+    fireFreq: 1,
     health: 25,
     textureNumber: 1,
   });
@@ -87,7 +87,7 @@ function getBonusParams(): {
   bonusType: BonusType;
   value: number;
 } | null {
-  if (getRandomInt(0, 10) < 2) {
+  if (getRandomInt(0, 10) < 6) {
     return null;
   }
 

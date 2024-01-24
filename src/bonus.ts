@@ -16,6 +16,11 @@ type BonusData = {
   bonusType: BonusType;
   value: number;
   addedAt: number;
+  applyingTarget?: {
+    x: number;
+    y: number;
+    progress: number; // 0- 100
+  };
 };
 
 export type Bonus = PIXI.Sprite & { data: BonusData };
@@ -60,6 +65,24 @@ export async function createBonus(
   app.stage.addChild(bonus);
 
   const process = (delta: number) => {
+    if (bonus.data.applyingTarget) {
+      // animate
+
+      if (bonus.data.applyingTarget.progress >= 100) {
+        unlink();
+        return;
+      }
+
+      const dx = bonus.data.applyingTarget.x - bonus.x;
+      const dy = bonus.data.applyingTarget.y - bonus.y;
+      bonus.data.applyingTarget.progress += 10;
+
+      bonus.x += dx / 10;
+      bonus.y += dy / 10;
+      bonus.scale.set(bonus.scale.x * 0.9, bonus.scale.y * 0.9);
+      return;
+    }
+
     const now = new Date().getTime();
 
     if (now - bonus.data.addedAt > BONUS_EXISTS_SEC * 1000) {
@@ -75,7 +98,13 @@ export async function createBonus(
         value: bonus.data.value,
       });
 
-      unlink();
+      bonus.data.applyingTarget = {
+        x: collisionTarget.x,
+        y: collisionTarget.y,
+        progress: 0,
+      };
+
+      bonus.scale.set(0.4, 0.4);
     }
   };
 

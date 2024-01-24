@@ -3,11 +3,17 @@ import { createBullet } from "./bullet";
 import { checkCollision } from "./hitTest";
 import { keyboard } from "./keyboard";
 import * as PIXI from "pixi.js";
+import { isTank } from "./type-guards";
+import { getRandomInt } from "./utils";
 
 const MAX_SPEED = 15;
 const MAX_BULLET_SPEED = 70;
 
+const AI_TARGET_DURATION_SEC = 40;
+
 const MIN_FIRE_FREQ = 0.1;
+
+const AI_FREQ_SEC = 1;
 
 type TankParams = {
   type: "tank";
@@ -29,13 +35,13 @@ type TankParams = {
   lastHelth: number;
   lastAIActionMs: number;
   isAI: boolean;
+  aiTarget?: Tank;
+  aiTargetSelectedAtMs: number;
 
   applyBonus?: (option: { bonusType: BonusType; value: number }) => void;
 };
 
 const textures = ["tank.png", "tankBlue.png"];
-
-const AI_FREQ_SEC = 3;
 
 export type Tank = PIXI.Sprite & { data: TankParams };
 
@@ -77,6 +83,7 @@ export function createTank(
       unlink: () => {},
       lastAIActionMs: 0,
       isAI: !controls,
+      aiTargetSelectedAtMs: 0,
     },
   });
 
@@ -185,32 +192,123 @@ export function createTank(
     right.release = onRightRelease;
   }
 
-  const process = (delta: number) => {
-    const now = new Date().getTime();
-    if (tank.data.isAI && now - tank.data.lastAIActionMs > AI_FREQ_SEC * 1000) {
-      tank.data.lastAIActionMs = now;
+  function stop() {
+    onUpRelease();
+    onDownRelease();
+    onLeftRelease();
+    onRightRelease();
+  }
 
-      onUpRelease();
-      onDownRelease();
-      onLeftRelease();
-      onRightRelease();
+  function hunt(target: Tank) {
+    const closest: "x" | "y" =
+      Math.abs(tank.x - target.x) > Math.abs(tank.y - target.y) ? "y" : "x";
 
-      const m = Math.random();
-      const f = Math.random();
+    stop();
 
-      if (m < 0.25) {
+    if (closest === "x") {
+      huntX(target);
+    } else {
+      huntY(target);
+    }
+  }
+
+  function huntX(target: Tank) {
+    if (Math.abs(tank.x - target.x) > 50) {
+      if (tank.x > target.x) {
+        onLeft();
+      } else {
+        onRight();
+      }
+    } else {
+      stop();
+
+      if (tank.y > target.y) {
         onUp();
-      } else if (m < 0.5) {
+      } else {
         onDown();
-      } else if (m < 0.75) {
+      }
+
+      if (Math.abs(tank.y - target.y) < 800) {
+        stop();
+        onFire();
+      }
+    }
+  }
+
+  function huntY(target: Tank) {
+    if (Math.abs(tank.y - target.y) > 50) {
+      if (tank.y > target.y) {
+        onUp();
+      } else {
+        onDown();
+      }
+    } else {
+      stop();
+
+      if (tank.x > target.x) {
         onLeft();
       } else {
         onRight();
       }
 
-      if (f > 0.1) {
+      if (Math.abs(tank.x - target.x) < 800) {
+        stop();
         onFire();
       }
+    }
+  }
+
+  const process = (delta: number) => {
+    // AI Actions
+    if (tank.data.isAI) {
+      const now = new Date().getTime();
+      // if (now - tank.data.lastAIActionMs > AI_FREQ_SEC * 1000) {
+      tank.data.lastAIActionMs = now;
+
+      if (
+        !tank.data.aiTarget ||
+        tank.data.aiTarget.destroyed ||
+        now - tank.data.aiTargetSelectedAtMs > AI_TARGET_DURATION_SEC * 1000
+      ) {
+        selectTarget(app, tank);
+        tank.data.aiTargetSelectedAtMs = now;
+      }
+
+      const target = tank.data.aiTarget;
+
+      if (!target) {
+        return;
+      }
+
+      hunt(target);
+
+      // }
+
+      // if (now - tank.data.lastAIActionMs > AI_FREQ_SEC * 1000) {
+      //   tank.data.lastAIActionMs = now;
+
+      //   onUpRelease();
+      //   onDownRelease();
+      //   onLeftRelease();
+      //   onRightRelease();
+
+      //   const m = Math.random();
+      //   const f = Math.random();
+
+      //   if (m < 0.25) {
+      //     onUp();
+      //   } else if (m < 0.5) {
+      //     onDown();
+      //   } else if (m < 0.75) {
+      //     onLeft();
+      //   } else {
+      //     onRight();
+      //   }
+
+      //   if (f > 0.1) {
+      //     onFire();
+      //   }
+      // }
     }
 
     if (tank.data.health !== tank.data.lastHelth) {
@@ -388,4 +486,17 @@ function getApplyBonusHandler(tank: Tank) {
       //
     }
   };
+}
+
+function selectTarget(app: PIXI.Application, tank: Tank) {
+  const tanks = app.stage.children
+    .filter(isTank)
+    .filter((t) => !t.data.isAI && !t.destroyed);
+
+  if (tanks.length === 0) {
+    tank.data.aiTarget = undefined;
+    return;
+  }
+
+  tank.data.aiTarget = tanks[getRandomInt(0, tanks.length - 1)];
 }
