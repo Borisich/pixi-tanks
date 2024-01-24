@@ -3,7 +3,7 @@ import { createTank } from "./tank";
 import { BonusType, createBonus } from "./bonus";
 import { getRandomInt } from "./utils";
 
-const BONUS_SPAWN_PERIOD_SEC = 2;
+const BONUS_SPAWN_PERIOD_SEC = 3;
 
 const app = new PIXI.Application({
   background: "#1099bb",
@@ -38,13 +38,13 @@ const tank2 = createTank(app, {
   textureNumber: 0,
 });
 
-const aiCnt = 1;
+const aiCnt = 2;
 
 for (let i = 0; i < aiCnt; i++) {
   const t = createTank(app, {
     speed: 1,
     fireFreq: 1,
-    health: 25,
+    health: 45,
     textureNumber: 1,
   });
 
@@ -66,7 +66,7 @@ app.stage.addChild(tank1);
 app.stage.addChild(tank2);
 
 setInterval(() => {
-  if (getRandomInt(0, 10) < 6) {
+  if (getRandomInt(0, 10) < 2) {
     return;
   }
 
@@ -75,10 +75,11 @@ setInterval(() => {
 
 const bonusesFreq = {
   [BonusType.Speed]: 1,
-  [BonusType.Aid]: 4,
-  [BonusType.FireFreq]: 2,
+  [BonusType.Aid]: 2,
+  [BonusType.FireFreq]: 1,
   [BonusType.BulletSpeed]: 1,
-  [BonusType.Power]: 6,
+  [BonusType.Power]: 1,
+  [BonusType.Armor]: 1,
 };
 
 const bA: BonusType[] = [];

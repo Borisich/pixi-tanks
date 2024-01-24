@@ -105,7 +105,10 @@ export function createBullet(
     }
 
     if (isTank(collisionTarget)) {
-      collisionTarget.data.health -= bullet.data.damage;
+      const damage =
+        bullet.data.damage * (1 / (collisionTarget.data.armor * 1.5 + 1));
+
+      collisionTarget.data.health -= damage;
 
       if (collisionTarget.data.health <= 0) {
         collisionTarget.data.unlink();

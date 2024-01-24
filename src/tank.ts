@@ -1,4 +1,4 @@
-import { BonusType } from "./bonus";
+import { BonusType, bonusTexturesMap } from "./bonus";
 import { createBullet } from "./bullet";
 import { checkCollision } from "./hitTest";
 import { keyboard } from "./keyboard";
@@ -6,16 +6,17 @@ import * as PIXI from "pixi.js";
 import { isTank } from "./type-guards";
 import { getRandomInt } from "./utils";
 
-const MAX_SPEED = 15;
-const MAX_BULLET_SPEED = 70;
+const SPEED_M = 1.5;
+
+const MAX_SPEED = 5;
+const MAX_BULLET_SPEED = 5;
 
 const AI_TARGET_DURATION_SEC = 40;
 
-const MIN_FIRE_FREQ = 0.1;
+const MAX_FIRE_FREQ = 5;
 
 const MAX_DMG = 5;
-
-const AI_FREQ_SEC = 1;
+const MAX_ARMOR = 5;
 
 type TankParams = {
   type: "tank";
@@ -33,6 +34,7 @@ type TankParams = {
   health: number;
 
   fireFreq: number;
+  armor: number;
 
   unlink: () => void;
 
@@ -82,7 +84,8 @@ export function createTank(
       maxHealth: health || 5,
       lastHelth: 0,
       speed,
-      bulletSpeed: 20,
+      armor: 0,
+      bulletSpeed: 1,
       fireFreq,
       lastFireMs: 0,
       unlink: () => {},
@@ -102,7 +105,7 @@ export function createTank(
 
     if (
       tank.data.lastFireMs &&
-      now - tank.data.lastFireMs < tank.data.fireFreq * 1000
+      now - tank.data.lastFireMs < (1 / tank.data.fireFreq) * 1000
     ) {
       return;
     }
@@ -110,7 +113,7 @@ export function createTank(
     tank.data.lastFireMs = now;
 
     const bullet = createBullet(app, {
-      speed: tank.data.bulletSpeed,
+      speed: 10 + tank.data.bulletSpeed * 5,
       direction: tank.angle,
       position: adjustBulletPosition(tank),
       damage: tank.data.damage,
@@ -123,7 +126,7 @@ export function createTank(
       return;
     }
 
-    tank.data.vy = -tank.data.speed;
+    tank.data.vy = -tank.data.speed * SPEED_M;
     syncRotation(app, tank);
   };
 
@@ -132,7 +135,7 @@ export function createTank(
       return;
     }
 
-    tank.data.vy = tank.data.speed;
+    tank.data.vy = tank.data.speed * SPEED_M;
     syncRotation(app, tank);
   };
 
@@ -141,7 +144,7 @@ export function createTank(
       return;
     }
 
-    tank.data.vx = -tank.data.speed;
+    tank.data.vx = -tank.data.speed * SPEED_M;
     syncRotation(app, tank);
   };
 
@@ -150,7 +153,7 @@ export function createTank(
       return;
     }
 
-    tank.data.vx = tank.data.speed;
+    tank.data.vx = tank.data.speed * SPEED_M;
     syncRotation(app, tank);
   };
 
@@ -318,7 +321,7 @@ export function createTank(
     }
 
     if (tank.data.health !== tank.data.lastHelth) {
-      drawHealthBar(tank);
+      drawStats(tank);
 
       tank.data.lastHelth = tank.data.health;
     }
@@ -402,7 +405,7 @@ function syncRotation(app: PIXI.Application, tank: Tank) {
 }
 
 function adjustBulletPosition(tank: Tank) {
-  const d = tank.height / 2 + 10;
+  const d = tank.height / 2 + 40;
   switch (tank.angle) {
     case 0:
       return {
@@ -430,21 +433,72 @@ function adjustBulletPosition(tank: Tank) {
   throw new Error("Bad angle");
 }
 
-function drawHealthBar(tank: Tank) {
+function drawStats(tank: Tank) {
   const c = tank.children[0];
   c?.destroy();
-  const maxW = 40;
+  const maxW = 120;
   const heathPercent = tank.data.health / tank.data.maxHealth;
 
   const w = Math.round(maxW * heathPercent);
 
-  let obj = new PIXI.Graphics();
+  const container = new PIXI.Container();
 
+  // Health bar
+  let healthBar = new PIXI.Graphics();
   // Add it to the stage to render
-  tank.addChild(obj);
+  healthBar.beginFill(getColor(heathPercent));
+  healthBar.drawRect(-60, -100, w, 8);
+  container.addChild(healthBar);
 
-  obj.beginFill(getColor(heathPercent));
-  obj.drawRect(-21, -40, w, 8);
+  // Bonuses
+  const p = new PIXI.Container();
+  let y = -110;
+  for (const bonus of [
+    BonusType.Power,
+    BonusType.BulletSpeed,
+    BonusType.FireFreq,
+    BonusType.Speed,
+    BonusType.Armor,
+  ]) {
+    y += 30;
+
+    const texture = PIXI.Texture.from(`bonus/${bonusTexturesMap[bonus]}`);
+
+    const f = getDataFieldByBonus(bonus);
+    if (!f) {
+      continue;
+    }
+
+    for (let i = 0; i < (tank.data[f] as number); i++) {
+      const sprite = new PIXI.Sprite(texture);
+      sprite.scale.set(0.07, 0.07);
+      sprite.x = -60 + i * 20;
+      sprite.y = y;
+      p.addChild(sprite);
+    }
+  }
+  container.addChild(p);
+
+  tank.addChild(container);
+}
+
+function getDataFieldByBonus(bonus: BonusType): keyof Tank["data"] | null {
+  switch (bonus) {
+    case BonusType.FireFreq:
+      return "fireFreq";
+    case BonusType.Aid:
+      return null;
+    case BonusType.Speed:
+      return "speed";
+    case BonusType.BulletSpeed:
+      return "bulletSpeed";
+    case BonusType.Power:
+      return "damage";
+    case BonusType.Armor:
+      return "armor";
+    default:
+      return null;
+  }
 }
 
 function getColor(value: number) {
@@ -473,9 +527,9 @@ function getApplyBonusHandler(tank: Tank) {
         break;
       }
       case BonusType.FireFreq: {
-        tank.data.fireFreq -= option.value;
-        if (tank.data.fireFreq < MIN_FIRE_FREQ) {
-          tank.data.fireFreq = MIN_FIRE_FREQ;
+        tank.data.fireFreq += option.value;
+        if (tank.data.fireFreq > MAX_FIRE_FREQ) {
+          tank.data.fireFreq = MAX_FIRE_FREQ;
         }
 
         break;
@@ -496,9 +550,19 @@ function getApplyBonusHandler(tank: Tank) {
 
         break;
       }
+      case BonusType.Armor: {
+        tank.data.armor += option.value;
+        if (tank.data.armor > MAX_ARMOR) {
+          tank.data.armor = MAX_ARMOR;
+        }
+
+        break;
+      }
       default:
       //
     }
+
+    drawStats(tank);
   };
 }
 

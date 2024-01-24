@@ -11,6 +11,7 @@ export enum BonusType {
   FireFreq = "fireFreq",
   BulletSpeed = "bulletSpeed",
   Power = "power",
+  Armor = "armor",
 }
 
 type BonusData = {
@@ -26,29 +27,30 @@ type BonusData = {
 
 export type Bonus = PIXI.Sprite & { data: BonusData };
 
-const texturesMap = {
+export const bonusTexturesMap = {
   [BonusType.Speed]: "speed.png",
   [BonusType.Aid]: "aid.png",
   [BonusType.FireFreq]: "fire-freq.png",
   [BonusType.BulletSpeed]: "bullet-speed.png",
   [BonusType.Power]: "power.png",
+  [BonusType.Armor]: "armor.png",
 };
 
-function getBousValue(bonus: BonusType) {
-  switch (bonus) {
-    case BonusType.FireFreq:
-      return 0.1;
-    case BonusType.Aid:
-    case BonusType.Speed:
-      return 1;
-    case BonusType.BulletSpeed:
-      return 10;
-    case BonusType.Power:
-      return 1;
-    default:
-      return 0;
-  }
-}
+// function getBousValue(bonus: BonusType) {
+//   switch (bonus) {
+//     case BonusType.FireFreq:
+//       return 0.1;
+//     case BonusType.Aid:
+//     case BonusType.Speed:
+//       return 1;
+//     case BonusType.BulletSpeed:
+//       return 10;
+//     case BonusType.Power:
+//       return 1;
+//     default:
+//       return 0;
+//   }
+// }
 
 export async function createBonus(
   app: PIXI.Application,
@@ -58,14 +60,14 @@ export async function createBonus(
 ) {
   // Create a new texture
   const texture = await PIXI.Assets.load(
-    `bonus/${texturesMap[options.bonusType]}`
+    `bonus/${bonusTexturesMap[options.bonusType]}`
   );
   const sprite = new PIXI.Sprite(texture);
 
   const bonus: Bonus = Object.assign(sprite, {
     data: {
       addedAt: new Date().getTime(),
-      value: getBousValue(options.bonusType),
+      value: 1,
       bonusType: options.bonusType,
     },
   });
