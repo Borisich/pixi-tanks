@@ -38,7 +38,7 @@ const tank2 = createTank(app, {
   textureNumber: 0,
 });
 
-const aiCnt = 2;
+const aiCnt = 1;
 
 for (let i = 0; i < aiCnt; i++) {
   const t = createTank(app, {
