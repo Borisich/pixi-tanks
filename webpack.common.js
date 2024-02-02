@@ -3,14 +3,16 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.ts",
-  devtool: "inline-source-map",
-  watch: true,
   module: {
     rules: [
       {
         test: /\.tsx?$/,
         use: "ts-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: "asset/resource",
       },
     ],
   },
