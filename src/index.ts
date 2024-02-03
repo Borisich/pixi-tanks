@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { createTank } from "./tank";
+import { createTank } from "./tank/tank";
 import { BonusType, createBonus } from "./bonus";
 import { getRandomInt } from "./utils";
 
@@ -23,6 +23,10 @@ const tank1 = createTank(app, {
     fire: "/",
   },
   textureNumber: 0,
+  position: {
+    x: app.screen.width + -100,
+    y: app.screen.height - 150,
+  },
 });
 
 const tank2 = createTank(app, {
@@ -36,6 +40,10 @@ const tank2 = createTank(app, {
     fire: "q",
   },
   textureNumber: 0,
+  position: {
+    x: 100,
+    y: app.screen.height - 150,
+  },
 });
 
 const aiCnt = 1;
@@ -46,24 +54,12 @@ for (let i = 0; i < aiCnt; i++) {
     fireFreq: 1,
     health: 45,
     textureNumber: 1,
+    position: {
+      x: 700 + 200 * i,
+      y: 150,
+    },
   });
-
-  t.x = 700 + 200 * i;
-  t.y = 150;
-
-  app.stage.addChild(t);
 }
-
-tank2.x = 100;
-tank2.y = app.screen.height - 150;
-tank2.angle = 180;
-
-tank1.x = app.screen.width + -100; ///
-tank1.y = app.screen.height - 150;
-tank1.angle = 180;
-
-app.stage.addChild(tank1);
-app.stage.addChild(tank2);
 
 setInterval(() => {
   if (getRandomInt(0, 10) < 2) {

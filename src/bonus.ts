@@ -36,21 +36,9 @@ export const bonusTexturesMap = {
   [BonusType.Armor]: "armor.png",
 };
 
-// function getBousValue(bonus: BonusType) {
-//   switch (bonus) {
-//     case BonusType.FireFreq:
-//       return 0.1;
-//     case BonusType.Aid:
-//     case BonusType.Speed:
-//       return 1;
-//     case BonusType.BulletSpeed:
-//       return 10;
-//     case BonusType.Power:
-//       return 1;
-//     default:
-//       return 0;
-//   }
-// }
+export function createBonusTexture(bonus: BonusType) {
+  return PIXI.Texture.from(`bonus/${bonusTexturesMap[bonus]}`);
+}
 
 export async function createBonus(
   app: PIXI.Application,

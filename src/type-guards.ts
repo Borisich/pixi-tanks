@@ -1,5 +1,5 @@
 import { Bullet } from "./bullet";
-import { Tank } from "./tank";
+import { Tank } from "./tank/tank";
 
 export function isTank(v: any): v is Tank {
   if (typeof v !== "object") {

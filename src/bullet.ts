@@ -4,6 +4,16 @@ import { createExplotion } from "./explotion";
 import { isBullet, isTank } from "./type-guards";
 import { getDeltaBySpeed } from "./utils";
 
+type BulletOptions = {
+  speed: number;
+  direction: number;
+  damage: number;
+  position: {
+    x: number;
+    y: number;
+  };
+};
+
 type BulletParams = {
   type: "bullet";
   damage: number;
@@ -14,18 +24,22 @@ type BulletParams = {
 
 export type Bullet = PIXI.Sprite & { data: BulletParams };
 
-export function createBullet(
-  app: PIXI.Application,
-  options: {
-    speed: number;
-    direction: number;
-    damage: number;
-    position: {
-      x: number;
-      y: number;
-    };
-  }
-) {
+export function createBullet(app: PIXI.Application, options: BulletOptions) {
+  const bullet = init(options);
+
+  const process = getProcess(bullet, app);
+
+  PIXI.Ticker.shared.add(process);
+
+  bullet.data.unlink = () => {
+    PIXI.Ticker.shared.remove(process);
+    bullet.destroy();
+  };
+
+  app.stage.addChild(bullet);
+}
+
+function init(options: BulletOptions) {
   const { speed, direction, position, damage } = options;
 
   // Create a new texture
@@ -71,24 +85,11 @@ export function createBullet(
     bullet.angle = 0;
   }
 
-  const explode = () => {
-    const explotion = createExplotion(app, {
-      position: { x: bullet.x, y: bullet.y },
-    });
+  return bullet;
+}
 
-    explotion.loop = false;
-    explotion.animationSpeed = 0.4;
-    explotion.onComplete = () => {
-      explotion.destroy();
-    };
-
-    app.stage.addChild(explotion);
-    explotion.play();
-
-    bullet.data.unlink();
-  };
-
-  const process = (delta: number) => {
+function getProcess(bullet: Bullet, app: PIXI.Application) {
+  return (delta: number) => {
     if (bullet.data.vy) {
       bullet.y += getDeltaBySpeed(bullet.data.vy);
     } else if (bullet.data.vx) {
@@ -98,7 +99,11 @@ export function createBullet(
     const collisionTarget = checkCollision(app, bullet);
 
     if (collisionTarget) {
-      explode();
+      createExplotion(app, {
+        position: { x: bullet.x, y: bullet.y },
+      });
+
+      bullet.data.unlink();
     }
 
     if (isBullet(collisionTarget)) {
@@ -116,12 +121,4 @@ export function createBullet(
       }
     }
   };
-
-  PIXI.Ticker.shared.add(process);
-  bullet.data.unlink = () => {
-    PIXI.Ticker.shared.remove(process);
-    bullet.destroy();
-  };
-
-  return bullet;
 }

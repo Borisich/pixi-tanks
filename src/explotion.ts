@@ -28,5 +28,13 @@ export function createExplotion(
   explotion.x = position.x;
   explotion.y = position.y;
 
-  return explotion;
+  // explode
+  explotion.loop = false;
+  explotion.animationSpeed = 0.4;
+  explotion.onComplete = () => {
+    explotion.destroy();
+  };
+
+  app.stage.addChild(explotion);
+  explotion.play();
 }
