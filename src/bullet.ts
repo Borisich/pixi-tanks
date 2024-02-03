@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import { checkCollision } from "./hitTest";
 import { createExplotion } from "./explotion";
 import { isBullet, isTank } from "./type-guards";
+import { getDeltaBySpeed } from "./utils";
 
 type BulletParams = {
   type: "bullet";
@@ -89,9 +90,9 @@ export function createBullet(
 
   const process = (delta: number) => {
     if (bullet.data.vy) {
-      bullet.y += bullet.data.vy;
+      bullet.y += getDeltaBySpeed(bullet.data.vy);
     } else if (bullet.data.vx) {
-      bullet.x += bullet.data.vx;
+      bullet.x += getDeltaBySpeed(bullet.data.vx);
     }
 
     const collisionTarget = checkCollision(app, bullet);

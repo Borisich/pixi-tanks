@@ -4,7 +4,7 @@ import { checkCollision } from "./hitTest";
 import { keyboard } from "./keyboard";
 import * as PIXI from "pixi.js";
 import { isTank } from "./type-guards";
-import { getRandomInt } from "./utils";
+import { getDeltaBySpeed, getRandomInt } from "./utils";
 
 const SPEED_M = 1.5;
 
@@ -334,9 +334,9 @@ export function createTank(
     const prevY = tank.y;
 
     if (tank.data.vy) {
-      tank.y += tank.data.vy;
+      tank.y += getDeltaBySpeed(tank.data.vy);
     } else if (tank.data.vx) {
-      tank.x += tank.data.vx;
+      tank.x += getDeltaBySpeed(tank.data.vx);
     }
 
     if (checkCollision(app, tank)) {
