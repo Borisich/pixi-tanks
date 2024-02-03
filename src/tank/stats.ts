@@ -70,6 +70,7 @@ function getDataFieldByBonus(bonus: BonusType): keyof Tank["data"] | null {
 
 function getColor(value: number) {
   //value from 0 to 1
-  var hue = (value * 120).toString(10);
+  const rounded = Math.round(value * 100) / 100;
+  var hue = (rounded * 120).toString(10);
   return ["hsl(", hue, ",100%,50%)"].join("");
 }

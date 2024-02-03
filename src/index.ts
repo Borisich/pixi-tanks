@@ -12,7 +12,7 @@ const app = new PIXI.Application({
 
 document.body.appendChild(app.view as any);
 
-const tank1 = createTank(app, {
+createTank(app, {
   speed: 3,
   fireFreq: 1,
   controls: {
@@ -29,7 +29,7 @@ const tank1 = createTank(app, {
   },
 });
 
-const tank2 = createTank(app, {
+createTank(app, {
   speed: 3,
   fireFreq: 1,
   controls: {
@@ -49,8 +49,8 @@ const tank2 = createTank(app, {
 const aiCnt = 1;
 
 for (let i = 0; i < aiCnt; i++) {
-  const t = createTank(app, {
-    speed: 1,
+  createTank(app, {
+    speed: 0,
     fireFreq: 1,
     health: 45,
     textureNumber: 1,

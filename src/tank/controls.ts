@@ -93,7 +93,7 @@ export function getHandlers(app: PIXI.Application, tank: Tank) {
     }
 
     tank.data.vy = -tank.data.speed * SPEED_M;
-    syncRotation(app, tank);
+    rotate(app, tank, 180);
   };
 
   const onDown = () => {
@@ -102,7 +102,7 @@ export function getHandlers(app: PIXI.Application, tank: Tank) {
     }
 
     tank.data.vy = tank.data.speed * SPEED_M;
-    syncRotation(app, tank);
+    rotate(app, tank, 0);
   };
 
   const onLeft = () => {
@@ -111,7 +111,7 @@ export function getHandlers(app: PIXI.Application, tank: Tank) {
     }
 
     tank.data.vx = -tank.data.speed * SPEED_M;
-    syncRotation(app, tank);
+    rotate(app, tank, 90);
   };
 
   const onRight = () => {
@@ -120,7 +120,7 @@ export function getHandlers(app: PIXI.Application, tank: Tank) {
     }
 
     tank.data.vx = tank.data.speed * SPEED_M;
-    syncRotation(app, tank);
+    rotate(app, tank, 270);
   };
 
   const onStop = () => {
@@ -138,24 +138,10 @@ export function getHandlers(app: PIXI.Application, tank: Tank) {
   };
 }
 
-function syncRotation(app: PIXI.Application, tank: Tank) {
+function rotate(app: PIXI.Application, tank: Tank, angle: number) {
   const prevAngle = tank.angle;
 
-  if (tank.angle !== 0 && tank.data.vy > 0) {
-    tank.angle = 0;
-  }
-
-  if (tank.angle !== 180 && tank.data.vy < 0) {
-    tank.angle = 180;
-  }
-
-  if (tank.angle !== 90 && tank.data.vx < 0) {
-    tank.angle = 90;
-  }
-
-  if (tank.angle !== 270 && tank.data.vx > 0) {
-    tank.angle = 270;
-  }
+  tank.angle = angle;
 
   if (checkCollision(app, tank)) {
     tank.angle = prevAngle;
